@@ -230,6 +230,66 @@ app.post('/webhooks/twilio/recording', validateTwilioWebhook, async (req, res) =
 });
 
 /**
+ * POST /tools/transfer-call
+ * ElevenLabs Custom Tool: Transfer hot lead to human agent
+ * Creates conference call with lead and agent
+ */
+app.post('/tools/transfer-call', express.json(), async (req, res) => {
+  console.log('\n🔥 Transfer Tool Triggered');
+  console.log('Body:', JSON.stringify(req.body, null, 2));
+
+  const { 
+    call_sid,
+    lead_name, 
+    property_address, 
+    lead_phone,
+    transfer_reason 
+  } = req.body;
+
+  if (!call_sid) {
+    return res.status(400).json({
+      success: false,
+      error: 'Missing call_sid'
+    });
+  }
+
+  try {
+    const { transferToAgent } = require('./lib/transferTool');
+    
+    const result = await transferToAgent({
+      call_sid,
+      lead_name: lead_name || 'Unknown',
+      property_address: property_address || 'Unknown',
+      lead_phone: lead_phone || 'Unknown',
+      transfer_reason: transfer_reason || 'Hot lead'
+    });
+
+    res.json(result);
+
+  } catch (error) {
+    console.error('Transfer tool error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      message: 'Transfer failed - agent will call back manually'
+    });
+  }
+});
+
+/**
+ * GET /twiml/hold-music
+ * Hold music for conference transfers
+ */
+app.get('/twiml/hold-music', (req, res) => {
+  res.type('text/xml');
+  res.send(`
+    <Response>
+      <Play>https://assets.twilio.com/cowbell.mp3</Play>
+    </Response>
+  `);
+});
+
+/**
  * Health check endpoint
  */
 app.get('/health', (req, res) => {
