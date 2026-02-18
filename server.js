@@ -56,22 +56,24 @@ function validateTwilioWebhook(req, res, next) {
  * Creates Call Record in Notion when call is completed
  */
 app.post('/webhooks/twilio/status', validateTwilioWebhook, async (req, res) => {
-  // Return 200 OK immediately to prevent Twilio retries
+  // Return 200 OK immediately to prevent retries
   res.status(200).send('OK');
 
-  // Process the status update asynchronously
-  const {
-    CallSid,
-    CallStatus,
-    CallDuration,
-    RecordingSid,
-    RecordingUrl,
-    From,
-    To,
-    Direction
-  } = req.body;
+  // Support both Twilio and ElevenLabs webhook formats
+  const body = req.body;
+  
+  // ElevenLabs format
+  const CallSid = body.CallSid || body.conversation_id || body.call_sid;
+  const CallStatus = body.CallStatus || body.status;
+  const CallDuration = body.CallDuration || body.call_duration_secs || body.duration;
+  const RecordingSid = body.RecordingSid || body.recording_sid;
+  const RecordingUrl = body.RecordingUrl || body.recording_url;
+  const From = body.From || body.from_number || body.caller_id;
+  const To = body.To || body.to_number || body.called_number;
+  const Direction = body.Direction || body.direction;
 
   console.log(`\n📞 Call Status Event:`);
+  console.log(`   Source: ${body.conversation_id ? 'ElevenLabs' : 'Twilio'}`);
   console.log(`   Call SID: ${CallSid}`);
   console.log(`   Status: ${CallStatus}`);
   console.log(`   Duration: ${CallDuration || 'N/A'} seconds`);
