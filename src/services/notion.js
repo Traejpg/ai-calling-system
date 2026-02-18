@@ -314,6 +314,42 @@ class NotionService {
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
   }
+
+  /**
+   * Find lead by phone number
+   * @param {string} phone - Phone number to search for
+   * @returns {Promise<Object|null>} - Lead data or null
+   */
+  async findLeadByPhone(phone) {
+    try {
+      // Format phone number for consistent matching
+      const formattedPhone = phone.replace(/\D/g, '');
+      
+      const response = await this.client.databases.query({
+        database_id: this.leadsDatabaseId,
+        filter: {
+          or: [
+            { property: 'Phone', phone_number: { equals: phone } },
+            { property: 'Phone', phone_number: { contains: formattedPhone.slice(-10) } }
+          ]
+        },
+        page_size: 1
+      });
+
+      if (response.results.length > 0) {
+        const lead = this.formatLead(response.results[0]);
+        logger.info('Found lead by phone', { phone, leadId: lead.id, name: lead.name });
+        return lead;
+      }
+
+      logger.info('No lead found for phone', { phone });
+      return null;
+
+    } catch (error) {
+      logger.error('Failed to find lead by phone', { phone, error: error.message });
+      return null;
+    }
+  }
 }
 
 module.exports = NotionService;
