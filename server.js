@@ -11,22 +11,39 @@ const PORT = process.env.PORT || 3000;
 const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN;
 
 // Middleware to parse URL-encoded bodies (Twilio sends form data)
-app.use(express.urlencoded({ extended: false }));
-app.use(express.json());
+// Increased limits for ElevenLabs webhooks (can include large transcripts)
+app.use(express.urlencoded({ extended: false, limit: '10mb' }));
+app.use(express.json({ limit: '10mb' }));
 
 /**
- * Middleware to validate Twilio webhook signatures
- * Returns 200 immediately to prevent retries, then processes
+ * Middleware to validate webhook signatures
+ * Supports both Twilio and ElevenLabs webhooks
  */
 function validateTwilioWebhook(req, res, next) {
   // Log incoming webhook immediately
   console.log(`\n[${new Date().toISOString()}] Incoming ${req.method} request to ${req.path}`);
-  console.log('Headers:', JSON.stringify(req.headers, null, 2));
-  console.log('Body:', JSON.stringify(req.body, null, 2));
 
-  // Skip validation if no auth token (development mode)
+  // Detect webhook source by headers
+  const isTwilio = req.headers['x-twilio-signature'];
+  const isElevenLabs = req.headers['x-elevenlabs-signature'];
+
+  console.log(`   Source: ${isTwilio ? 'Twilio' : isElevenLabs ? 'ElevenLabs' : 'Unknown'}`);
+
+  // Skip validation for ElevenLabs (we handle that separately if needed)
+  if (isElevenLabs) {
+    console.log('✅ ElevenLabs webhook - skipping Twilio validation');
+    return next();
+  }
+
+  // Skip validation if no Twilio auth token (development mode)
   if (!TWILIO_AUTH_TOKEN) {
     console.warn('⚠️  TWILIO_AUTH_TOKEN not set - skipping signature validation');
+    return next();
+  }
+
+  // Skip if no Twilio signature present
+  if (!isTwilio) {
+    console.warn('⚠️  No Twilio signature - skipping validation');
     return next();
   }
 
