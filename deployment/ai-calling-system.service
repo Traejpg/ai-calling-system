@@ -1,0 +1,28 @@
+[Unit]
+Description=AI Calling System for Real Estate Leads
+Documentation=https://github.com/yourusername/ai-calling-system
+After=network.target
+
+[Service]
+Type=simple
+User=nodejs
+WorkingDirectory=/var/www/ai-calling-system
+ExecStart=/usr/bin/node src/server.js
+Restart=always
+RestartSec=10
+Environment=NODE_ENV=production
+EnvironmentFile=/var/www/ai-calling-system/.env
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ai-calling-system
+
+# Security
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/www/ai-calling-system/logs /var/www/ai-calling-system/data
+
+[Install]
+WantedBy=multi-user.target

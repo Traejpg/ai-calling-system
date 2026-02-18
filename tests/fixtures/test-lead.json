@@ -1,0 +1,11 @@
+{
+  "name": "AI Calling System Test Lead",
+  "phone": "+13125551234",
+  "name": "Test Lead",
+  "address": "123 Test Street, Chicago, IL 60601",
+  "leadScore": 85,
+  "temperature": "Hot",
+  "status": "New",
+  "taxSaleAmount": 5000,
+  "dnc": false
+}

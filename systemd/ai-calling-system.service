@@ -1,0 +1,42 @@
+[Unit]
+Description=AI Calling System
+After=network.target
+
+[Service]
+Type=simple
+User=deploy
+WorkingDirectory=/var/www/ai-calling-system
+
+# Environment
+Environment=NODE_ENV=production
+Environment=PORT=3000
+
+# Load environment from file
+EnvironmentFile=/var/www/ai-calling-system/.env
+
+# Start command
+ExecStart=/usr/bin/node src/server.js
+
+# Restart policy
+Restart=always
+RestartSec=10
+StartLimitInterval=60s
+StartLimitBurst=3
+
+# Graceful shutdown
+TimeoutStopSec=30
+KillSignal=SIGTERM
+
+# Security
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/www/ai-calling-system/logs
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ai-calling-system
+
+[Install]
+WantedBy=multi-user.target
